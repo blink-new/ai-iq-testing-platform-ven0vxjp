@@ -1,342 +1,343 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Trophy, Brain, TrendingUp, BarChart3, Share2, RotateCcw } from 'lucide-react'
+import { Brain, Trophy, TrendingUp, Clock, RotateCcw, Home, Gamepad2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { useNavigate } from 'react-router-dom'
+import { Badge } from '@/components/ui/badge'
+import { Link } from 'react-router-dom'
 
-interface TestResults {
+interface IQTestResult {
   score: number
-  total: number
-  percentage: number
-  iqEstimate: number
-  completedAt: string
-}
-
-interface CognitiveProfile {
-  category: string
-  score: number
-  description: string
-  color: string
+  correctAnswers: number
+  totalQuestions: number
+  timeSpent: number
+  date: string
 }
 
 const Results = () => {
-  const navigate = useNavigate()
-  const [results, setResults] = useState<TestResults | null>(null)
-  const [cognitiveProfile, setCognitiveProfile] = useState<CognitiveProfile[]>([])
+  const [iqResult, setIqResult] = useState<IQTestResult | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Load results from localStorage
-    const savedResults = localStorage.getItem('iqTestResults')
-    if (savedResults) {
-      const parsedResults: TestResults = JSON.parse(savedResults)
-      setResults(parsedResults)
-      generateCognitiveProfile(parsedResults)
+    const savedResult = localStorage.getItem('iqTestResult')
+    if (savedResult) {
+      try {
+        setIqResult(JSON.parse(savedResult))
+      } catch (error) {
+        console.error('Error parsing IQ test result:', error)
+      }
     }
+    setLoading(false)
   }, [])
 
-  const generateCognitiveProfile = (testResults: TestResults) => {
-    // Generate AI-based cognitive analysis
-    const baseScore = testResults.percentage
-    
-    const profile: CognitiveProfile[] = [
-      {
-        category: 'Pattern Recognition',
-        score: Math.min(100, baseScore + Math.random() * 20 - 10),
-        description: 'Ability to identify and understand visual and logical patterns',
-        color: 'from-blue-500 to-blue-600'
-      },
-      {
-        category: 'Logical Reasoning',
-        score: Math.min(100, baseScore + Math.random() * 20 - 10),
-        description: 'Capacity for systematic thinking and problem-solving',
-        color: 'from-purple-500 to-purple-600'
-      },
-      {
-        category: 'Spatial Intelligence',
-        score: Math.min(100, baseScore + Math.random() * 20 - 10),
-        description: 'Understanding of spatial relationships and visual processing',
-        color: 'from-green-500 to-green-600'
-      },
-      {
-        category: 'Processing Speed',
-        score: Math.min(100, baseScore + Math.random() * 20 - 10),
-        description: 'Speed of cognitive processing and mental agility',
-        color: 'from-orange-500 to-orange-600'
-      },
-      {
-        category: 'Working Memory',
-        score: Math.min(100, baseScore + Math.random() * 20 - 10),
-        description: 'Ability to hold and manipulate information in mind',
-        color: 'from-red-500 to-red-600'
-      }
-    ]
-
-    setCognitiveProfile(profile)
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes}m ${remainingSeconds}s`
   }
 
-  const getIQCategory = (iq: number) => {
-    if (iq >= 130) return { label: 'Very Superior', color: 'text-purple-400' }
-    if (iq >= 120) return { label: 'Superior', color: 'text-blue-400' }
-    if (iq >= 110) return { label: 'High Average', color: 'text-green-400' }
-    if (iq >= 90) return { label: 'Average', color: 'text-yellow-400' }
-    if (iq >= 80) return { label: 'Low Average', color: 'text-orange-400' }
-    return { label: 'Below Average', color: 'text-red-400' }
+  const getIQDescription = (score: number) => {
+    if (score >= 140) return { level: 'Genius', description: 'Exceptional intellectual ability', color: 'text-purple-400' }
+    if (score >= 130) return { level: 'Very Superior', description: 'Outstanding cognitive performance', color: 'text-blue-400' }
+    if (score >= 120) return { level: 'Superior', description: 'Above average intelligence', color: 'text-green-400' }
+    if (score >= 110) return { level: 'High Average', description: 'Good cognitive abilities', color: 'text-yellow-400' }
+    if (score >= 90) return { level: 'Average', description: 'Normal range of intelligence', color: 'text-gray-400' }
+    if (score >= 80) return { level: 'Low Average', description: 'Below average performance', color: 'text-orange-400' }
+    return { level: 'Below Average', description: 'Consider retaking the test', color: 'text-red-400' }
   }
 
-  const shareResults = () => {
-    if (results) {
-      const text = `I just completed an AI-powered IQ test and scored ${results.iqEstimate}! 🧠✨ #IQTest #AI`
-      if (navigator.share) {
-        navigator.share({
-          title: 'My IQ Test Results',
-          text,
-          url: window.location.origin
-        })
-      } else {
-        navigator.clipboard.writeText(`${text} ${window.location.origin}`)
-        // You could add a toast notification here
-      }
-    }
+  const clearResults = () => {
+    localStorage.removeItem('iqTestResult')
+    setIqResult(null)
   }
 
-  const retakeTest = () => {
-    navigate('/iq-test')
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Loading results...</p>
+        </div>
+      </div>
+    )
   }
 
-  const exploreGames = () => {
-    navigate('/ai-games')
-  }
-
-  if (!results) {
+  if (!iqResult) {
     return (
       <div className="min-h-screen pt-16 flex items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
+          className="max-w-2xl mx-auto px-4 text-center"
         >
-          <Brain className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-          <h2 className="text-2xl font-bold text-white mb-4">No Results Found</h2>
-          <p className="text-gray-300 mb-6">
-            Take an IQ test first to see your results and cognitive analysis.
-          </p>
-          <Button
-            onClick={() => navigate('/iq-test')}
-            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-          >
-            Take IQ Test
-          </Button>
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+            <CardHeader>
+              <div className="w-20 h-20 mx-auto mb-4 bg-gradient-to-r from-gray-500 to-gray-600 rounded-full flex items-center justify-center">
+                <Brain className="w-10 h-10 text-white" />
+              </div>
+              <CardTitle className="text-3xl font-bold text-white mb-4">
+                No Results Found
+              </CardTitle>
+              <p className="text-gray-300 text-lg">
+                You haven't taken an IQ test yet. Take the test to see your cognitive assessment results here.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+                  <Link to="/iq-test">
+                    <Brain className="w-5 h-5 mr-2" />
+                    Take IQ Test
+                  </Link>
+                </Button>
+                
+                <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+                  <Link to="/">
+                    <Home className="w-5 h-5 mr-2" />
+                    Go Home
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </div>
     )
   }
 
-  const iqCategory = getIQCategory(results.iqEstimate)
+  const iqDescription = getIQDescription(iqResult.score)
+  const accuracyPercentage = Math.round((iqResult.correctAnswers / iqResult.totalQuestions) * 100)
 
   return (
     <div className="min-h-screen pt-16">
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring' }}
-            className="w-20 h-20 mx-auto mb-6 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center"
-          >
-            <Trophy className="w-10 h-10 text-white" />
-          </motion.div>
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Your IQ Analysis
+          <h1 className="text-5xl font-bold text-white mb-4">
+            Your <span className="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">Cognitive Profile</span>
           </h1>
           <p className="text-xl text-gray-300">
-            Detailed cognitive assessment powered by AI
+            AI-powered analysis of your intellectual capabilities
           </p>
         </motion.div>
 
-        {/* Main Results */}
+        {/* Main IQ Score */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2 }}
+          className="mb-8"
         >
-          {/* IQ Score */}
-          <Card className="lg:col-span-2 bg-white/5 backdrop-blur-sm border-white/10">
-            <CardHeader>
-              <CardTitle className="text-2xl text-white flex items-center space-x-2">
-                <Brain className="w-6 h-6" />
-                <span>IQ Estimate</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 0.5, type: 'spring' }}
-                  className="text-6xl font-bold text-white mb-4"
-                >
-                  {results.iqEstimate}
-                </motion.div>
-                <Badge 
-                  variant="outline" 
-                  className={`text-lg px-4 py-2 border-white/30 ${iqCategory.color}`}
-                >
-                  {iqCategory.label}
-                </Badge>
-                <div className="mt-6 grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{results.score}/{results.total}</div>
-                    <div className="text-gray-300 text-sm">Correct Answers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-white">{results.percentage}%</div>
-                    <div className="text-gray-300 text-sm">Accuracy</div>
-                  </div>
+          <Card className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-white/20 backdrop-blur-sm">
+            <CardContent className="text-center py-12">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.5, type: 'spring', stiffness: 200 }}
+                className="mb-6"
+              >
+                <div className="text-8xl font-bold bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent mb-2">
+                  {iqResult.score}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button
-                onClick={shareResults}
-                variant="outline"
-                className="w-full border-white/30 text-white hover:bg-white/10"
-              >
-                <Share2 className="w-4 h-4 mr-2" />
-                Share Results
-              </Button>
-              <Button
-                onClick={retakeTest}
-                variant="outline"
-                className="w-full border-white/30 text-white hover:bg-white/10"
-              >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Retake Test
-              </Button>
-              <Button
-                onClick={exploreGames}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
-              >
-                <Brain className="w-4 h-4 mr-2" />
-                Challenge AI
-              </Button>
+                <div className="text-2xl text-white font-semibold mb-2">IQ Score</div>
+                <Badge className={`${iqDescription.color} bg-white/10 text-lg px-4 py-2`}>
+                  {iqDescription.level}
+                </Badge>
+              </motion.div>
+              <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+                {iqDescription.description}. Your cognitive assessment indicates strong problem-solving abilities and analytical thinking skills.
+              </p>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Cognitive Profile */}
+        {/* Detailed Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-green-500/20 rounded-full flex items-center justify-center">
+                  <Trophy className="w-6 h-6 text-green-400" />
+                </div>
+                <CardTitle className="text-white">Accuracy</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="text-3xl font-bold text-green-400 mb-2">{accuracyPercentage}%</div>
+                <p className="text-gray-300 text-sm">
+                  {iqResult.correctAnswers} out of {iqResult.totalQuestions} correct
+                </p>
+                <Progress value={accuracyPercentage} className="mt-4 h-2" />
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-blue-500/20 rounded-full flex items-center justify-center">
+                  <Clock className="w-6 h-6 text-blue-400" />
+                </div>
+                <CardTitle className="text-white">Completion Time</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="text-3xl font-bold text-blue-400 mb-2">{formatTime(iqResult.timeSpent)}</div>
+                <p className="text-gray-300 text-sm">
+                  {iqResult.timeSpent < 900 ? 'Quick thinker!' : iqResult.timeSpent < 1500 ? 'Good pace' : 'Thoughtful approach'}
+                </p>
+                <div className="mt-4 h-2 bg-white/10 rounded-full">
+                  <div 
+                    className="h-full bg-blue-400 rounded-full transition-all duration-1000"
+                    style={{ width: `${Math.min((iqResult.timeSpent / 1800) * 100, 100)}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Card className="bg-white/5 backdrop-blur-sm border-white/10">
+              <CardHeader className="text-center">
+                <div className="w-12 h-12 mx-auto mb-2 bg-purple-500/20 rounded-full flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 text-purple-400" />
+                </div>
+                <CardTitle className="text-white">Cognitive Ranking</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <div className="text-3xl font-bold text-purple-400 mb-2">
+                  Top {iqResult.score >= 130 ? '2' : iqResult.score >= 115 ? '15' : iqResult.score >= 100 ? '50' : '85'}%
+                </div>
+                <p className="text-gray-300 text-sm">
+                  Compared to general population
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <div className="w-20 h-20 rounded-full border-4 border-purple-400/30 flex items-center justify-center">
+                    <span className="text-purple-400 font-bold">
+                      {iqResult.score >= 130 ? '98th' : iqResult.score >= 115 ? '85th' : iqResult.score >= 100 ? '50th' : '15th'}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Cognitive Insights */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
+          className="mb-8"
         >
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10 mb-8">
+          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
             <CardHeader>
-              <CardTitle className="text-2xl text-white flex items-center space-x-2">
-                <BarChart3 className="w-6 h-6" />
-                <span>Cognitive Profile</span>
+              <CardTitle className="text-white text-center text-2xl">
+                AI Insights & Recommendations
               </CardTitle>
-              <p className="text-gray-300">
-                AI analysis of your cognitive strengths across different domains
-              </p>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {cognitiveProfile.map((item, index) => (
-                  <motion.div
-                    key={item.category}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.8 + index * 0.1 }}
-                    className="space-y-4"
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold text-white">{item.category}</h3>
-                      <span className="text-white font-bold">{Math.round(item.score)}%</span>
-                    </div>
-                    <Progress 
-                      value={item.score} 
-                      className="h-2"
-                    />
-                    <p className="text-sm text-gray-300 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </motion.div>
-                ))}
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-blue-400">Cognitive Strengths</h3>
+                  <ul className="space-y-2 text-gray-300">
+                    {iqResult.score >= 120 && (
+                      <>
+                        <li>• Exceptional pattern recognition</li>
+                        <li>• Strong analytical reasoning</li>
+                        <li>• Advanced problem-solving skills</li>
+                      </>
+                    )}
+                    {iqResult.score >= 100 && iqResult.score < 120 && (
+                      <>
+                        <li>• Good logical thinking</li>
+                        <li>• Solid reasoning abilities</li>
+                        <li>• Effective cognitive processing</li>
+                      </>
+                    )}
+                    {iqResult.score < 100 && (
+                      <>
+                        <li>• Room for cognitive development</li>
+                        <li>• Potential for improvement</li>
+                        <li>• Practice can enhance abilities</li>
+                      </>
+                    )}
+                  </ul>
+                </div>
+                
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold text-purple-400">Next Steps</h3>
+                  <ul className="space-y-2 text-gray-300">
+                    <li>• Challenge yourself with strategic games</li>
+                    <li>• Practice pattern recognition exercises</li>
+                    <li>• Engage in logic puzzles regularly</li>
+                    <li>• Consider cognitive training programs</li>
+                  </ul>
+                </div>
               </div>
             </CardContent>
           </Card>
         </motion.div>
 
-        {/* Insights & Recommendations */}
+        {/* Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9 }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+          transition={{ delay: 0.7 }}
+          className="flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardHeader>
-              <CardTitle className="text-xl text-white flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5" />
-                <span>Key Insights</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-2" />
-                  <span>Your cognitive performance is {iqCategory.label.toLowerCase()}</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full mt-2" />
-                  <span>Strongest area: {cognitiveProfile.reduce((max, item) => item.score > max.score ? item : max).category}</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-green-400 rounded-full mt-2" />
-                  <span>Completed test with {results.percentage}% accuracy</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/5 backdrop-blur-sm border-white/10">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">Next Steps</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2" />
-                  <span>Challenge AI in strategic games to improve</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-orange-400 rounded-full mt-2" />
-                  <span>Retake the test to track your progress</span>
-                </li>
-                <li className="flex items-start space-x-2">
-                  <div className="w-2 h-2 bg-red-400 rounded-full mt-2" />
-                  <span>Share your results with friends</span>
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+          <Button asChild size="lg" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white">
+            <Link to="/ai-games">
+              <Gamepad2 className="w-5 h-5 mr-2" />
+              Challenge AI Games
+            </Link>
+          </Button>
+          
+          <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+            <Link to="/iq-test">
+              <RotateCcw className="w-5 h-5 mr-2" />
+              Retake Test
+            </Link>
+          </Button>
+          
+          <Button 
+            onClick={clearResults}
+            size="lg" 
+            variant="outline" 
+            className="border-red-500/30 text-red-400 hover:bg-red-500/10"
+          >
+            Clear Results
+          </Button>
         </motion.div>
+
+        {/* Test Date */}
+        <div className="text-center mt-8">
+          <p className="text-gray-400 text-sm">
+            Test completed on {new Date(iqResult.date).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </p>
+        </div>
       </div>
     </div>
   )
